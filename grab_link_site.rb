@@ -31,7 +31,7 @@ $execution = Hash.new
 $execution['site'] = "pontofrio.com.br"
 $execution['method'] = "search_pagination"
 $execution['search_url'] = "http://search.pontofrio.com.br/search?p=Q&lbc=pontofrio-br&ts=custom&w=*&af=&isort=score&method=and&view=grid&srt="
-$execution['css_xpath'] = "[@class='product-link']"
+$execution['css_xpath'] = "[@class='link url']"
 $execution['link_reference_xpath'] = "link['href']"
 $execution['pagination_factor'] = 20
 
