@@ -11,6 +11,15 @@ require 'socket'
 require 'mysql'
 require 'connection_pool'
 
+# sitenumber 1 - walmart.com.br
+# sitenumber 2 - pontofrio.com.br
+# sitebumber 3 - amazon.com
+
+site_number = ARGV[0]
+unless site_number
+	puts "you need to provide the site number"
+end
+
 POOL_SIZE = 15
 $process_id_db = 0;
 $db_connection_pool = ConnectionPool.new(size: POOL_SIZE, timeout: 5) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}
@@ -21,19 +30,39 @@ end
 
 $execution = Hash.new
 
-# $execution['site'] = "walmart.com.br"
-# $execution['method'] = "search_pagination"
-# $execution['search_url'] = "https://www.walmart.com.br/busca/?ft=*&PS=40&PageNumber="
-# $execution['css_xpath'] = "[@class='product-link']"
-# $execution['link_reference_xpath'] = "link['href']"
-# $execution['pagination_factor'] = 1
+case site_number 
 
-$execution['site'] = "pontofrio.com.br"
-$execution['method'] = "search_pagination"
-$execution['search_url'] = "http://search.pontofrio.com.br/search?p=Q&lbc=pontofrio-br&ts=custom&w=*&af=&isort=score&method=and&view=grid&srt="
-$execution['css_xpath'] = "[@class='link url']"
-$execution['link_reference_xpath'] = "link['href']"
-$execution['pagination_factor'] = 20
+	when 1
+
+		$execution['site'] = "walmart.com.br"
+		$execution['method'] = "search_pagination"
+		$execution['search_url'] = "https://www.walmart.com.br/busca/?ft=*&PS=40&PageNumber="
+		$execution['css_xpath'] = "[@class='product-link']"
+		$execution['link_reference_xpath'] = "link['href']"
+		$execution['pagination_factor'] = 1
+
+	when 2
+
+		$execution['site'] = "pontofrio.com.br"
+		$execution['method'] = "search_pagination"
+		$execution['search_url'] = "http://search.pontofrio.com.br/search?p=Q&lbc=pontofrio-br&ts=custom&w=*&af=&isort=score&method=and&view=grid&srt="
+		$execution['css_xpath'] = "[@class='link url']"
+		$execution['link_reference_xpath'] = "link['href']"
+		$execution['pagination_factor'] = 20
+
+	when 3
+
+		$execution['site'] = "amazon.com"
+		$execution['method'] = "search_pagination"
+		$execution['search_url'] = "http://www.amazon.com/s/ref=sr_pg_2?rh=i%3Aaps%2Ck%3A%22.%22&keywords=%22.%22&page="
+		$execution['css_xpath'] = "[@class='a-link-normal s-access-detail-page  a-text-normal']"
+		$execution['link_reference_xpath'] = "link['href']"
+		$execution['pagination_factor'] = 1
+
+	else
+		puts "You gave me #{site_number} -- I have no idea what to do with that."
+		exit()
+	end		
 
 $pagination = pagination_factor($execution['pagination_factor'])
 
@@ -99,10 +128,12 @@ def parse_page_via_nokogiri(number)
 
 	dump_to_file = false
 	dump_to_mysql = true
-	dump_to_screen = false
+	dump_to_screen = true
 
 	begin
-		local_page = Nokogiri::HTML(open(load_page_number(number),:allow_redirections => :safe))
+		string = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.56 Safari/536.5'
+
+		local_page = Nokogiri::HTML(open(load_page_number(number),:allow_redirections => :safe, "User-Agent" => string))
 		local_links = local_page.css($execution['css_xpath'])
 
 		local_links.each { |link| 
@@ -121,6 +152,12 @@ def parse_page_via_nokogiri(number)
 
 		}
 
+		if number > 330
+			puts local_page.to_s
+			puts %{###}
+			exit ()
+		end
+
 	rescue OpenURI::HTTPError => error
   		response = error.io
   		response.status
@@ -135,7 +172,7 @@ end
 
 $process_id_db = register_process
 
-10.times{|i| jobs.push i}
+500.times{|i| jobs.push i}
 
 workers = (POOL_SIZE).times.map do
   Thread.new do
