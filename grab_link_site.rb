@@ -52,6 +52,7 @@ def register_process
 end
 
 def finisih_process
+	process = Hash.new
 	process["end_time"] = Time.new.strftime(time_format)
 	time_format = "%Y-%m-%d %H:%M:%S"
 	statement = "UPDATE process SET end_time = \"#{process['end_time']}\" WHERE id = #{$process_id_db};"
