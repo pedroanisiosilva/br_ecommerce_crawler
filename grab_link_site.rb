@@ -15,6 +15,28 @@ POOL_SIZE = 15
 $process_id_db = 0;
 $db_connection_pool = ConnectionPool.new(size: POOL_SIZE, timeout: 5) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}
 
+def pagination_factor(factor)
+  return Proc.new {|n| n*factor }
+end
+
+$execution = Hash.new
+
+# $execution['site'] = "walmart.com.br"
+# $execution['method'] = "search_pagination"
+# $execution['search_url'] = "https://www.walmart.com.br/busca/?ft=*&PS=40&PageNumber="
+# $execution['css_xpath'] = "[@class='product-link']"
+# $execution['link_reference_xpath'] = "link['href']"
+# $execution['pagination_factor'] = 1
+
+$execution['site'] = "pontofrio.com.br"
+$execution['method'] = "search_pagination"
+$execution['search_url'] = "http://search.pontofrio.com.br/search?p=Q&lbc=pontofrio-br&ts=custom&w=*&af=&isort=score&method=and&view=grid&srt="
+$execution['css_xpath'] = "[@class='product-link']"
+$execution['link_reference_xpath'] = "link['href']"
+$execution['pagination_factor'] = 20
+
+$pagination = pagination_factor($execution['pagination_factor'])
+
 jobs = Queue.new
 
 def insert_process(process)
@@ -45,7 +67,7 @@ def register_process
 	process["executed_file"] = __FILE__
 	process["executed_host"] = Socket.gethostname
 	process["self_copy"] = File.open(process["executed_file"], "rb").read
-	process["target_site"] = "walmart.com.br"
+	process["target_site"] = $execution['site']
 	process["start_time"] = Time.new.strftime(time_format)
 
 	insert_process(process)
@@ -53,8 +75,8 @@ end
 
 def finisih_process
 	process = Hash.new
+	time_format = "%Y-%m-%d %H:%M:%S"	
 	process["end_time"] = Time.new.strftime(time_format)
-	time_format = "%Y-%m-%d %H:%M:%S"
 	statement = "UPDATE process SET end_time = \"#{process['end_time']}\" WHERE id = #{$process_id_db};"
 
 	$db_connection_pool.with do |db_connection|
@@ -70,7 +92,7 @@ def dump_data(data)
 end
 
 def load_page_number(number)
-	url = %{https://www.walmart.com.br/busca/?ft=*&PS=40&PageNumber=#{number}} 
+	url = %{#{$execution['search_url']}#{$pagination.call(number)}} 
 end
 
 def parse_page_via_nokogiri(number)
@@ -81,7 +103,7 @@ def parse_page_via_nokogiri(number)
 
 	begin
 		local_page = Nokogiri::HTML(open(load_page_number(number),:allow_redirections => :safe))
-		local_links = local_page.css("[@class='product-link']")
+		local_links = local_page.css($execution['css_xpath'])
 
 		local_links.each { |link| 
 
@@ -113,7 +135,7 @@ end
 
 $process_id_db = register_process
 
-20500.times{|i| jobs.push i}
+10.times{|i| jobs.push i}
 
 workers = (POOL_SIZE).times.map do
   Thread.new do
