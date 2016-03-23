@@ -1,0 +1,14 @@
+CREATE TABLE `process` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `execution_registry` varchar(64) NOT NULL,
+  `executed_file` varchar(256) NOT NULL,
+  `executed_host` varchar(256) NOT NULL,
+  `self_copy` blob NOT NULL,
+  `pid` int(11) NOT NULL,
+  `target_site` varchar(45) NOT NULL,
+  `start_time` datetime NOT NULL,
+  `end_time` varchar(45) DEFAULT NULL,
+  `last_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `execution_registry_UNIQUE` (`execution_registry`)
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=latin2;
