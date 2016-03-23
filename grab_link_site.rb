@@ -30,7 +30,7 @@ end
 
 $execution = Hash.new
 
-case site_number 
+case site_number.to_i
 
 	when 1
 
@@ -151,12 +151,6 @@ def parse_page_via_nokogiri(number)
 			end
 
 		}
-
-		if number > 330
-			puts local_page.to_s
-			puts %{###}
-			exit ()
-		end
 
 	rescue OpenURI::HTTPError => error
   		response = error.io
