@@ -40,6 +40,9 @@ case site_number.to_i
 		$execution['css_xpath'] = "[@class='product-link']"
 		$execution['link_reference_xpath'] = "link['href']"
 		$execution['pagination_factor'] = 1
+		$execution['max_sku'] = 980000
+		$execution['sku_per_page'] = 40
+
 
 	when 2
 
@@ -49,6 +52,8 @@ case site_number.to_i
 		$execution['css_xpath'] = "[@class='link url']"
 		$execution['link_reference_xpath'] = "link['href']"
 		$execution['pagination_factor'] = 20
+		$execution['max_sku'] = 140000000		
+		$execution['sku_per_page'] = 20
 
 	when 3
 
@@ -58,6 +63,8 @@ case site_number.to_i
 		$execution['css_xpath'] = "[@class='a-link-normal s-access-detail-page  a-text-normal']"
 		$execution['link_reference_xpath'] = "link['href']"
 		$execution['pagination_factor'] = 1
+		$execution['max_sku'] = 536000000
+		$execution['sku_per_page'] = 28		
 
 	else
 		puts "You gave me #{site_number} -- I have no idea what to do with that."
@@ -128,7 +135,7 @@ def parse_page_via_nokogiri(number)
 
 	dump_to_file = false
 	dump_to_mysql = true
-	dump_to_screen = true
+	dump_to_screen = false
 
 	begin
 		string = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.56 Safari/536.5'
@@ -166,7 +173,7 @@ end
 
 $process_id_db = register_process
 
-500.times{|i| jobs.push i}
+($execution['max_sku']/$execution['sku_per_page']).to_i.times{|i| jobs.push i}
 
 workers = (POOL_SIZE).times.map do
   Thread.new do
