@@ -9,6 +9,7 @@ require 'rubygems'
 require 'nokogiri'
 require 'open_uri_redirections'
 require 'json'
+require 'ostruct'
 
 def dump_data(data)
 	file_path = "/Users/pasilv1/Dropbox/Synced/_personal/dev"
@@ -34,9 +35,9 @@ def parse_page_via_nokogiri(number)
 		local_parse.each {|script|
 			if script.to_s.match('var dataLayer')
 
-				if script.to_s  =~ /<script>var dataLayer = (.*);dataLayer.push/ then 
- 				 dataLayer = JSON.parse($1)
- 				 dump_data(dataLayer)
+				if script.to_s  =~ /<script>var dataLayer = \[{"product":\s\[(.*)\],/ then 
+				 obj = JSON.parse($1, object_class: OpenStruct)
+				 puts obj.productSku
 				end
 			end
 		} 

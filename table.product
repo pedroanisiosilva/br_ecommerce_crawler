@@ -1,0 +1,12 @@
+CREATE TABLE `product` (
+  `id` int(11) NOT NULL,
+  `name` varchar(256) DEFAULT NULL,
+  `brandName` varchar(256) NOT NULL,
+  `departmentName` varchar(128) DEFAULT NULL,
+  `subcategoryName` varchar(128) DEFAULT NULL,
+  `categoryName` varchar(128) NOT NULL,
+  `model` varchar(128) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `model_UNIQUE` (`model`),
+  KEY `MODEL` (`model`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin2;
