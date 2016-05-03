@@ -19,7 +19,7 @@ class PoulateProduct < ProcessBase
 		jobs = Queue.new
 
 		con = self.get_connection
-		rs = con.query 'select * from raw_product_url where process_id = 22 limit 400;'
+		rs = con.query 'select * from raw_product_url where process_id = 20 limit 400;'
 
 		## begin execution
 
@@ -32,7 +32,8 @@ class PoulateProduct < ProcessBase
 		      while x = jobs.pop(true)
 					parse_page_via_nokogiri(%{https://www.walmart.com.br#{results_array[x]["url"]}})
 		      end
-		    rescue ThreadError
+		    rescue ThreadError => ex
+			puts "An error of type #{ex.class} happened, message is #{ex.message}"
 		    end
 		  end
 		end
@@ -50,7 +51,8 @@ class PoulateProduct < ProcessBase
 
 	    begin
 	    	con.query(statement)
-	    rescue
+	    rescue Exception => ex
+		puts "An error of type #{ex.class} happened, message is #{ex.message}"
 	    end
 
 	end
