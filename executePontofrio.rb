@@ -17,7 +17,6 @@ class PontoFrio < ProcessBase
 	def select_raw_products
 
 		jobs = Queue.new
-
 		con = self.get_connection
 		rs = con.query 'select * from raw_product_url where process_id = 24 limit 100;'
 

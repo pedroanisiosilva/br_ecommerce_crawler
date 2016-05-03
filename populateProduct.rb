@@ -52,7 +52,7 @@ class PoulateProduct < ProcessBase
 	    begin
 	    	con.query(statement)
 	    rescue Exception => ex
-		puts "An error of type #{ex.class} happened, message is #{ex.message}"
+		puts "An error of type #{ex.class} happened, message is #{ex.message} [#{product["url"]}]"
 	    end
 
 	end
@@ -89,6 +89,7 @@ def parse_page_via_nokogiri(url)
 					 	product["departmentName"] = obj.productDepartmentName
 					 	product["categoryName"] = obj.productCategoryName
 					 	product["subcategoryName"] = obj.productSubCategory
+					 	product["url"] = url
 					 end
 				end
 			end
@@ -110,6 +111,9 @@ def parse_page_via_nokogiri(url)
   		puts %{[#{response.status}][#{response.string}] sleep 5s}
   		sleep(5)
 	end 
+
+	puts 
+
 	if (can_save)
 		insert_product(product)
 	end
