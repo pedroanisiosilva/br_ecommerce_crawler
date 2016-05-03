@@ -70,14 +70,18 @@ class ProcessBase
 
 	end
 
-	def register_process
+	def register_process(file)
+
+		unless file
+			file = __FILE__
+		end
 
 		time_format = "%Y-%m-%d %H:%M:%S"
 
 		process = Hash.new
 		process["pid"] = Process.pid
 		process["execution_registry"] = Digest::SHA256.base64digest %{#{Time.new.to_i}#{process["pid"]}}
-		process["executed_file"] = __FILE__
+		process["executed_file"] = file
 		process["executed_host"] = Socket.gethostname
 		process["self_copy"] = File.open(process["executed_file"], "rb").read
 		process["target_site"] = $execution['site']
@@ -102,7 +106,7 @@ class ProcessBase
 		$db_connection_pool = ConnectionPool.new(size: POOL_SIZE, timeout: 5) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}		
 		$execution = Hash.new
 		setup_execution()
-		$process_id_db = register_process
+		
 	end
 
 end

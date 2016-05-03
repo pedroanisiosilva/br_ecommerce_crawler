@@ -9,21 +9,21 @@ require 'ostruct'
 
 class PoulateProduct < ProcessBase
 
+	def initialize
+		super
+		$process_id_db = register_process(__FILE__)
+	end
+
 	def select_raw_products
 
 		jobs = Queue.new
 
 		con = self.get_connection
 		rs = con.query 'select * from raw_product_url where process_id = 22 limit 400;'
-		# rs.each do |result|
-		# 	parse_page_via_nokogiri(%{https://www.walmart.com.br#{result["url"]}})
-		# end 
 
 		## begin execution
 
-
 		rs.size.times{|i| jobs.push i}
-
 		results_array = rs.each.to_a
 
 		workers = (POOL_SIZE).times.map do
@@ -114,6 +114,7 @@ def parse_page_via_nokogiri(url)
 end
 
 p = PoulateProduct.new()
+
 p.select_raw_products
 
 
