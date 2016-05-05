@@ -1,0 +1,41 @@
+SELECT 
+    produto.name,
+    produto.url,
+    frete.freight_name,
+    frete.freight_cost,
+    frete.freight_promise,
+    frete.zip_code
+FROM
+    COMMERCE_CRAWLER.freight_data AS frete,
+    product AS produto
+WHERE
+    frete.product_id = 58
+        AND frete.product_id = produto.id
+
+// Produtos que não tem frete catalogado no Walmart
+
+SELECT 
+    p.*
+FROM
+    product p
+        LEFT JOIN
+    freight_data f ON f.product_id = p.id
+WHERE
+    f.product_id IS NULL AND p.origin = "walmart.com.br"
+LIMIT 10
+
+// Frete mais longo
+
+SELECT 
+    *
+FROM
+    COMMERCE_CRAWLER.freight_data
+ORDER BY CAST(freight_promise AS UNSIGNED) DESC;
+
+// Frete mais caro
+
+SELECT 
+    *
+FROM
+    COMMERCE_CRAWLER.freight_data
+ORDER BY CAST(freight_cost AS UNSIGNED) DESC;

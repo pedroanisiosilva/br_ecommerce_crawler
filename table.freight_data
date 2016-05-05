@@ -1,0 +1,13 @@
+CREATE TABLE `freight_data` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `product_id` int(11) DEFAULT NULL,
+  `freight_name` varchar(45) DEFAULT NULL,
+  `freight_cost` varchar(45) DEFAULT NULL,
+  `freight_promise` varchar(45) DEFAULT NULL,
+  `target_site` varchar(45) DEFAULT NULL,
+  `zip_code` varchar(10) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `CEP` (`zip_code`),
+  KEY `PRODUTO` (`product_id`),
+  KEY `PRODUTO_CEP` (`product_id`,`zip_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin2;

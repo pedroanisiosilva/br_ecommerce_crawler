@@ -8,6 +8,8 @@ require 'mysql'
 require 'connection_pool'
 
 POOL_SIZE = 15
+MYSQL_POOL_SIZE = 30
+
 
 class ProcessBase 
 
@@ -98,12 +100,12 @@ class ProcessBase
 
 		$site_number = ARGV[0]
 		unless $site_number
-			puts "you need to provide the site number || assuming Walmart"
+			puts "you need to provide the site number || assuming walmart.com.br (1)"
 			$site_number = 1
 		end
 
 		$process_id_db = 0;
-		$db_connection_pool = ConnectionPool.new(size: POOL_SIZE, timeout: 5) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}		
+		$db_connection_pool = ConnectionPool.new(size: MYSQL_POOL_SIZE, timeout: 5) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}		
 		$execution = Hash.new
 		setup_execution()
 		
