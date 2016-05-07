@@ -9,6 +9,7 @@ require 'ostruct'
 require 'connection_pool'
 require 'mysql2'
 require 'mysql'
+require 'json'
 
 JOB_MYSQL_POOL_SIZE = 5
 JOB_POOL_SIZE = 15
@@ -114,7 +115,7 @@ class PoulateProductTable
 						 	@product["productSku"] = obj.productSku
 						 	@product["productSeller"] = Mysql.escape_string(obj.productSeller.to_s.force_encoding('UTF-8'))
 						 	@product["can_save"] = true
-						 	@product["raw_data"] = Mysql.escape_string(site_txt.force_encoding('UTF-8'))
+						 	@product["raw_data"] = obj.to_json
 						
 						rescue Exception => ex
 							puts "An error of type #{ex.class} happened, message is #{ex.message} [736]"
