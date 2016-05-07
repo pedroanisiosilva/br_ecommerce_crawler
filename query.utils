@@ -1,16 +1,34 @@
+
+// Produto por ProdutoRelated
+
 SELECT 
-    produto.name,
-    produto.url,
-    frete.freight_name,
-    frete.freight_cost,
-    frete.freight_promise,
-    frete.zip_code
+    p.name,
+    p.url,
+    pr.url,
+    pr.target_site,
 FROM
-    COMMERCE_CRAWLER.freight_data AS frete,
-    product AS produto
+    product_related pr,
+    product p
 WHERE
-    frete.product_id = 58
-        AND frete.product_id = produto.id
+    f.product_id = 215
+        AND pr.product_id = p.id
+
+
+// Produto por Frete
+
+SELECT 
+    p.name,
+    p.url,
+    f.freight_name,
+    f.freight_cost,
+    f.freight_promise,
+    f.zip_code
+FROM
+    freight_data AS f,
+    product p
+WHERE
+    f.product_id = 58
+        AND f.product_id = p.id
 
 // Produtos que não tem frete catalogado no Walmart
 
@@ -39,3 +57,32 @@ SELECT
 FROM
     COMMERCE_CRAWLER.freight_data
 ORDER BY CAST(freight_cost AS UNSIGNED) DESC;
+
+// Count Product Related 
+
+SELECT 
+    target_site, COUNT(1)
+FROM
+    product_related
+GROUP BY target_site;
+
+//
+
+SELECT 
+    pr1.id, pr1.product_id
+FROM
+    product_related AS pr1
+        JOIN
+    product_related AS pr2 ON pr2.product_id = pr1.product_id
+        AND pr1.target_site = 'pontofrio.com.br'
+        AND pr2.target_site = 'americanas.com.br'
+        JOIN
+    product_related AS pr3 ON pr3.product_id = pr2.product_id
+        AND pr3.target_site = 'casasbahia.com.br'
+        JOIN
+    product_related AS pr4 ON pr4.product_id = pr3.product_id
+        AND pr4.target_site = 'magazineluiza.com.br'
+
+// 
+
+SELECT count(product_id) as total,product_id FROM freight_data GROUP BY product_id ORDER by total desc

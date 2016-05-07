@@ -29,7 +29,8 @@ class JobHandler
 		@jobs = Queue.new
 		@db_job_pool = ConnectionPool.new(size: JOB_MYSQL_POOL_SIZE, timeout: 5) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}		
 
-		statement = %{SELECT p.* FROM product p LEFT JOIN freight_data f ON f.product_id = p.id WHERE f.product_id IS NULL AND p.origin = "#{site}" LIMIT #{limit}}
+		#statement = %{SELECT p.* FROM product p LEFT JOIN freight_data f ON f.product_id = p.id WHERE f.product_id IS NULL AND p.origin = "#{site}" LIMIT #{limit}}
+		statement = %{SELECT p.* FROM product p LEFT JOIN freight_data f ON f.product_id = p.id WHERE f.product_id IS NULL LIMIT #{limit}}
 
 		if (limit == -99)
 			statement = %{select * from product where origin = "#{site}"}
@@ -120,13 +121,15 @@ class PoulateFreightTable
 	end	
 
 	def run
-		cep_array = ["15450","04510"]
+		cep_sp = ['04538','06460','01001','08210','05859']
+		cep_array = cep_sp
 		self.fetchFreight(cep_array)
 	end
 end
 
 #execution = JobHandler.new(20,-99,"walmart.com.br") # no limit on select
-#execution = JobHandler.new(20,10,"walmart.com.br") # limit to 10 results
-execution = JobHandler.new(5000,"walmart.com.br") # limit to 10 results, development env
+execution = JobHandler.new(10,"walmart.com.br") # limit to 10 results
+#execution = JobHandler.new(5000,"walmart.com.br") # limit to 10 results, development env
+#execution = JobHandler.new(10,"pontofrio.com.br") # limit to 10 results, development env
 
 execution.run #execute!
