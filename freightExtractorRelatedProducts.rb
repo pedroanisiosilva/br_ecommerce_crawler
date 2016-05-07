@@ -47,7 +47,6 @@ class JobHandler
 		db = self.get_connection
 		@results = db.query(statement)
 		@site = site
-
 		@log.debug(%{query: #{statement}})
 		@log.debug(%{results: #{@results.size}})
 	end
@@ -103,17 +102,39 @@ class PoulateFreightTable
 		page_string
 	end
 
-	def db_insertFreightData(freight_name,freight_price,freight_promise,freight_raw_data,freight_destination)
+	def revisionNumber(freight_name,zip_code,product_id,freight_cost,freight_promise)
+		statement = %{SELECT f.freight_cost, f.freight_promise, f.freight_revision FROM freight_data f WHERE f.freight_name = '#{freight_name}' AND product_id = '#{product_id}' AND zip_code = #{zip_code};}
+		results = @db.query(statement)
 
-		statement = "INSERT INTO freight_data (product_id, freight_name, freight_cost, freight_promise, target_site,zip_code,freight_raw_data)
-	   VALUES(\"#{@product['product_id']}\", \"#{freight_name}\", \"#{freight_price}\",\"#{freight_promise}\", 
-	   \"#{@site}\",\"#{freight_destination}\",\"#{Mysql.escape_string(freight_raw_data.force_encoding(Encoding::UTF_8))}\");"		
-	    
-	    begin
-	    	@db.query(statement)
-	    rescue Exception => ex
-	    	puts "An error of type #{ex.class} happened, message is #{ex.message} [7dh]"
-	    end		
+		if results.size == 0
+			return 0
+		end
+
+		results.each do | result|
+			puts %{result #{freight_promise}:#{result["freight_promise"]}}
+			puts %{result #{freight_cost}:#{result["freight_cost"]}}
+			if (freight_promise.to_i != result["freight_promise"].to_i || freight_cost.to_f != result["freight_cost"].to_f)
+				puts %{increment revision}
+				return result["freight_revision"]+1
+			end
+		end
+		return -1
+	end	
+
+	def db_insertFreightData(freight_name,freight_price,freight_promise,freight_raw_data,freight_destination)
+		freight_revision = self.revisionNumber(freight_name,freight_destination,@product['product_id'],freight_price,freight_promise)
+
+		if freight_revision >= 0
+			statement = "INSERT INTO freight_data (product_id, freight_name, freight_cost, freight_promise, target_site,zip_code,freight_raw_data,freight_revision)
+		   VALUES(\"#{@product['product_id']}\", \"#{freight_name}\", \"#{freight_price}\",\"#{freight_promise}\", 
+		   \"#{@site}\",\"#{freight_destination}\",\"#{Mysql.escape_string(freight_raw_data.force_encoding(Encoding::UTF_8))}\",\"#{freight_revision}\");"		
+		    
+		    begin
+		    	@db.query(statement)
+		    rescue Exception => ex
+		    	puts "An error of type #{ex.class} happened, message is #{ex.message} [7dh]"
+		    end
+		end	
 	end
 
 	def getFreightMagazine(sku)
@@ -373,7 +394,7 @@ end
 #execution = JobHandler.new(20,-99,"walmart.com.br") # no limit on select
 #execution = JobHandler.new(1000,"americanas.com.br") # limit to 10 results
 #execution = JobHandler.new(5000,"walmart.com.br") # limit to 10 results, development env
-execution = JobHandler.new(100,"americanas.com.br") # limit to 10 results
+execution = JobHandler.new(1,"americanas.com.br") # limit to 10 results
 #execution = JobHandler.new(100,"pontofrio.com.br") # limit to 10 results, development env
 #execution = JobHandler.new(100,"casasbahia.com.br") # limit to 10 results
 #execution = JobHandler.new(1000,"magazineluiza.com.br") # limit to 10 results
