@@ -104,7 +104,8 @@ class PoulateProductTable
 				if script.to_s.match('var dataLayer')
 					if script.to_s  =~ /<script>var dataLayer = \[{"product":\s\[(.*)\],/ then 
 						begin
-							obj = JSON.parse($1, object_class: OpenStruct)
+							site_txt = $1
+							obj = JSON.parse(site_txt, object_class: OpenStruct)
 					 		@product["name"] = obj.productName
 						 	@product["brandName"] = obj.productBrandName
 						 	@product["departmentName"] = obj.productDepartmentName
@@ -113,6 +114,7 @@ class PoulateProductTable
 						 	@product["productSku"] = obj.productSku
 						 	@product["productSeller"] = Mysql.escape_string(obj.productSeller.to_s)
 						 	@product["can_save"] = true
+						 	@product["raw_data"] = site_txt
 						
 						rescue Exception => ex
 							puts "An error of type #{ex.class} happened, message is #{ex.message} [736]"
@@ -146,10 +148,11 @@ class PoulateProductTable
 	end
 
 	def insert_product
-	   statement = "INSERT INTO product (name, brandName, departmentName, categoryName, subcategoryName,model,url,origin,targetSkuID,targetSourceID)
+	   statement = "INSERT INTO product (name, brandName, departmentName, categoryName, subcategoryName,model,url,origin,targetSkuID,targetSourceID,raw_data)
 	   VALUES(\"#{@product['name']}\", \"#{@product['brandName']}\", \"#{@product['departmentName']}\",
 	    \"#{@product['categoryName']}\", \"#{@product['subcategoryName']}\",\"#{@product['model']}\",
-	    \"#{@url}\",\"#{@site}\",\"#{@product['productSku']}\",\"#{@product['productSeller']}\");"
+	    \"#{@url}\",\"#{@site}\",\"#{@product['productSku']}\",\"#{@product['productSeller']}\",
+	    \"#{Mysql.escape_string(product['raw_data'])})\";"
 
 	    begin
 	    	@db.query(statement)
@@ -175,8 +178,8 @@ class PoulateProductTable
 end
 
 #execution = JobHandler.new(20,-99,"walmart.com.br") # no limit on select
-#execution = JobHandler.new(20,10,"walmart.com.br") # limit to 10 results
+#execution = JobHandler.new(20,1,"walmart.com.br") # limit to 10 results
 #execution = JobHandler.new(19,2000,"walmart.com.br") # limit to 10 results, development env
-execution = JobHandler.new(19,-99,"walmart.com.br") # no limit on prod enviroment
+execution = JobHandler.new(172,-99,"walmart.com.br") # no limit on prod enviroment
 
 execution.run #execute!
