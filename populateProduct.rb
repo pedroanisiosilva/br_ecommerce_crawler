@@ -152,7 +152,7 @@ class PoulateProductTable
 	   VALUES(\"#{@product['name']}\", \"#{@product['brandName']}\", \"#{@product['departmentName']}\",
 	    \"#{@product['categoryName']}\", \"#{@product['subcategoryName']}\",\"#{@product['model']}\",
 	    \"#{@url}\",\"#{@site}\",\"#{@product['productSku']}\",\"#{@product['productSeller']}\",
-	    \"#{Mysql.escape_string(@product['raw_data'])})\";"
+	    \"#{Mysql.escape_string(@product['raw_data'].force_encoding(Encoding::UTF_8))})\";"
 
 	    begin
 	    	@db.query(statement)
