@@ -18,6 +18,7 @@ require 'connection_pool'
 site_number = ARGV[0]
 unless site_number
 	puts "you need to provide the site number"
+	site_number = 1
 end
 
 POOL_SIZE = 15

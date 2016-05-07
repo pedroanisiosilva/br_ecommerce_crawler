@@ -112,9 +112,9 @@ class PoulateProductTable
 						 	@product["categoryName"] = obj.productCategoryName
 						 	@product["subcategoryName"] = obj.productSubCategory
 						 	@product["productSku"] = obj.productSku
-						 	@product["productSeller"] = Mysql.escape_string(obj.productSeller.to_s)
+						 	@product["productSeller"] = Mysql.escape_string(obj.productSeller.to_s.force_encoding('UTF-8'))
 						 	@product["can_save"] = true
-						 	@product["raw_data"] = site_txt
+						 	@product["raw_data"] = Mysql.escape_string(site_txt.force_encoding('UTF-8'))
 						
 						rescue Exception => ex
 							puts "An error of type #{ex.class} happened, message is #{ex.message} [736]"
@@ -152,7 +152,11 @@ class PoulateProductTable
 	   VALUES(\"#{@product['name']}\", \"#{@product['brandName']}\", \"#{@product['departmentName']}\",
 	    \"#{@product['categoryName']}\", \"#{@product['subcategoryName']}\",\"#{@product['model']}\",
 	    \"#{@url}\",\"#{@site}\",\"#{@product['productSku']}\",\"#{@product['productSeller']}\",
-	    \"#{Mysql.escape_string(@product['raw_data'].force_encoding('UTF-8'))})\";"
+	    \"#{@product['raw_data']}\");"
+
+	  
+
+	    puts statement
 
 	    begin
 	    	@db.query(statement)
