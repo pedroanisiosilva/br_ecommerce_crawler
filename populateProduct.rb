@@ -10,6 +10,7 @@ require 'connection_pool'
 require 'mysql2'
 require 'mysql'
 require 'json'
+require 'bson'
 
 JOB_MYSQL_POOL_SIZE = 5
 JOB_POOL_SIZE = 15
@@ -96,6 +97,17 @@ class PoulateProductTable
 		end
 	end
 
+	def adjust_encode_and_escape(str)
+		str = ""
+		begin
+			str = str.to_s.encode!("ISO-8859-1", :undef => :replace, :invalid => :replace, :replace => "")
+			Mysql.escape_string(str.encode!('UTF-8'))
+			return str
+		rescue
+			return str
+		end
+	end
+
 	def parse_html_build_product
 		begin
 			local_page = Nokogiri::HTML(open(@url,:allow_redirections => :safe))
@@ -107,15 +119,16 @@ class PoulateProductTable
 						begin
 							site_txt = $1
 							obj = JSON.parse(site_txt, object_class: OpenStruct)
+
 					 		@product["name"] = obj.productName
 						 	@product["brandName"] = obj.productBrandName
 						 	@product["departmentName"] = obj.productDepartmentName
 						 	@product["categoryName"] = obj.productCategoryName
 						 	@product["subcategoryName"] = obj.productSubCategory
 						 	@product["productSku"] = obj.productSku
-						 	@product["productSeller"] = Mysql.escape_string(obj.productSeller.to_s.force_encoding('UTF-8'))
+						 	@product["productSeller"] = self.adjust_encode_and_escape(obj.productSeller.to_s)
 						 	@product["can_save"] = true
-						 	@product["raw_data"] = obj.to_json
+						 	@product["raw_data"] = self.adjust_encode_and_escape(site_txt)
 						
 						rescue Exception => ex
 							puts "An error of type #{ex.class} happened, message is #{ex.message} [736]"
@@ -155,10 +168,6 @@ class PoulateProductTable
 	    \"#{@url}\",\"#{@site}\",\"#{@product['productSku']}\",\"#{@product['productSeller']}\",
 	    \"#{@product['raw_data']}\");"
 
-	  
-
-	    puts statement
-
 	    begin
 	    	@db.query(statement)
 	    	@product["id"] = @db.last_id
@@ -167,18 +176,33 @@ class PoulateProductTable
 	    end
 	end
 
+	def check_if_exist
+		statement = %{SELECT * FROM product p where p.url = "#{@url}"}
+		results = @db.query(statement)
+
+		if results.size == 0
+			return false
+		else
+			return true
+		end
+	end		
+
 	def run
 		#cep_array = ["15450","04510"]
 
-		self.parse_html_build_product
-		
-		#can't save if threre is error or model is empty
-		if (@product["can_save"] == false || @product["model"].nil?)
+		if(self.check_if_exist)
 			return
 		else
-			self.insert_product
+			self.parse_html_build_product
+		
+			#can't save if threre is error or model is empty
+			if (@product["can_save"] == false || @product["model"].nil?)
+				return
+			else
+				self.insert_product
+			end
+			#self.fetchFreight(cep_array)
 		end
-		#self.fetchFreight(cep_array)
 	end
 end
 
