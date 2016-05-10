@@ -1,8 +1,8 @@
 #/usr/bin/ruby
 
-##TODO: Add this script to run in crontab
-##FIXME: Refactor excption handling
-##TODO: Enable ERROR_LOG
+#TODO: Add this script to run in crontab
+#FIXME: Refactor excption handling
+#TODO: Enable ERROR_LOG
 
 require './ProcessBase.rb'
 require 'rubygems'
