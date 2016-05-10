@@ -1,5 +1,9 @@
 #/usr/bin/ruby
 
+##TODO: Add this script to run in crontab
+##FIXME: Refactor excption handling
+##TODO: Enable ERROR_LOG
+
 require './ProcessBase.rb'
 require 'rubygems'
 require 'nokogiri'
@@ -12,9 +16,9 @@ require 'mysql'
 require 'json'
 require 'bson'
 
-JOB_MYSQL_POOL_SIZE = 5
-JOB_POOL_SIZE = 15
-PRODUCT_MYSQL_POOL_SIZE = 30
+JOB_MYSQL_POOL_SIZE = 1
+JOB_POOL_SIZE = 20
+PRODUCT_MYSQL_POOL_SIZE = 40
 
 class JobHandler
 
@@ -26,7 +30,7 @@ class JobHandler
 
 	def initialize(process_id,limit,site)	
 		@jobs = Queue.new
-		@db_job_pool = ConnectionPool.new(size: JOB_MYSQL_POOL_SIZE, timeout: 5) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}		
+		@db_job_pool = ConnectionPool.new(size: JOB_MYSQL_POOL_SIZE, timeout: 1) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}		
 		statement = %{select * from raw_product_url where process_id = #{process_id} limit #{limit}}
 
 		if (limit == -99)
@@ -36,7 +40,6 @@ class JobHandler
 		db = self.get_connection
 		@results = db.query(statement)
 		@site = site
-
 	end
 
 	def run
@@ -57,7 +60,6 @@ class JobHandler
 				end
 			end
 		end
-
 		workers.map(&:join)
 	end
 end
@@ -65,7 +67,12 @@ end
 class PoulateProductTable
 
 	def initialize(url,site)
-		@@db_job_pool = ConnectionPool.new(size: PRODUCT_MYSQL_POOL_SIZE, timeout: 5) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}		
+		begin
+			@@db_job_pool.nil?
+		rescue
+			@@db_job_pool = ConnectionPool.new(size: PRODUCT_MYSQL_POOL_SIZE, timeout: 1) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}	
+		end
+
 		@url = url
 		@db = self.get_connection
 		@product = Hash.new
@@ -74,7 +81,13 @@ class PoulateProductTable
 
 	def get_connection
 		@@db_job_pool.with do |db_connection|
-			return db_connection
+			begin
+				db_connection.query("SELECT NOW()")
+				return db_connection
+			rescue
+				sleep (1)
+				self.get_connection
+			end
 		end
 	end
 
@@ -98,12 +111,12 @@ class PoulateProductTable
 	end
 
 	def adjust_encode_and_escape(str)
-		str = ""
 		begin
-			str = str.to_s.encode!("ISO-8859-1", :undef => :replace, :invalid => :replace, :replace => "")
-			Mysql.escape_string(str.encode!('UTF-8'))
+			str = str.encode!("ISO-8859-1", :undef => :replace, :invalid => :replace, :replace => "")
+			str = Mysql.escape_string(str.encode!('UTF-8'))
 			return str
 		rescue
+			str = ""
 			return str
 		end
 	end
@@ -162,13 +175,12 @@ class PoulateProductTable
 	end
 
 	def insert_product
-	   statement = "INSERT INTO product (name, brandName, departmentName, categoryName, subcategoryName,model,url,origin,targetSkuID,targetSourceID,raw_data)
+	    begin
+	    	statement = "INSERT INTO product (name, brandName, departmentName, categoryName, subcategoryName,model,url,origin,targetSkuID,targetSourceID,raw_data)
 	   VALUES(\"#{@product['name']}\", \"#{@product['brandName']}\", \"#{@product['departmentName']}\",
 	    \"#{@product['categoryName']}\", \"#{@product['subcategoryName']}\",\"#{@product['model']}\",
 	    \"#{@url}\",\"#{@site}\",\"#{@product['productSku']}\",\"#{@product['productSeller']}\",
-	    \"#{@product['raw_data']}\");"
-
-	    begin
+	    \"#{@product['raw_data']}\");"	    	
 	    	@db.query(statement)
 	    	@product["id"] = @db.last_id
 	    rescue Exception => ex
@@ -178,11 +190,15 @@ class PoulateProductTable
 
 	def check_if_exist
 		statement = %{SELECT * FROM product p where p.url = "#{@url}"}
-		results = @db.query(statement)
+		begin
+			results = @db.query(statement)
 
-		if results.size == 0
-			return false
-		else
+			if results.size == 0
+				return false
+			else
+				return true
+			end
+		rescue
 			return true
 		end
 	end		
