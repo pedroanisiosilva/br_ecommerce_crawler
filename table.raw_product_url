@@ -1,8 +1,0 @@
-CREATE TABLE `raw_product_url` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `process_id` int(11) NOT NULL,
-  `url` varchar(512) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `product_id_idx` (`process_id`),
-  CONSTRAINT `process` FOREIGN KEY (`process_id`) REFERENCES `process` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=343197 DEFAULT CHARSET=latin2;

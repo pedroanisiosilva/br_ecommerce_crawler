@@ -28,9 +28,7 @@ class JobHandler
 
 	def initialize(limit,site)	
 		@jobs = Queue.new
-		@db_job_pool = ConnectionPool.new(size: JOB_MYSQL_POOL_SIZE, timeout: 5) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}		
-
-		#statement = %{SELECT p.* FROM product p LEFT JOIN freight_data f ON f.product_id = p.id WHERE f.product_id IS NULL AND p.origin = "#{site}" LIMIT #{limit}}
+		@db_job_pool = ConnectionPool.new(size: JOB_MYSQL_POOL_SIZE, timeout: 1) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}		
 		statement = %{SELECT p.* FROM product p where p.url NOT IN (SELECT pr.url FROM product_related pr where pr.target_site="#{site}") LIMIT #{limit}}
 
 		if (limit == -99)
@@ -66,7 +64,7 @@ end
 class PopulateProductRelatedTable
 
 	def initialize(product,site)
-		@@db_job_pool = ConnectionPool.new(size: PRODUCT_MYSQL_POOL_SIZE, timeout: 5) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}		
+		@@db_job_pool = ConnectionPool.new(size: PRODUCT_MYSQL_POOL_SIZE, timeout: 1) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}		
 		@db = self.get_connection
 		@product = product
 		@site = site
@@ -133,20 +131,6 @@ class PopulateProductRelatedTable
     	end			
 	end
 
-	def searchCompetitorWithGoogle
-		url = %{https://www.google.com/search?q=site:#{@site} #{@product['name']} #{@product['model']}&num=100}
-		search = parseUrl(url)
-		links = search.scan(/<h3 class="r"><a href=[\'"]?([^\'" >]+)/).flatten
-		results_array = links.each.to_a
-
-		if results_array[0] =~ /\?url=([^&]+)/
-			results_array[0] = $1
-		elsif results_array[0] =~ /\?q=([^&]+)/
-			results_array[0] = $1
-		end
-		results_array[0]
-	end
-
 	def run
 		url = self.searchCompetitorWithBuscape
 
@@ -156,20 +140,16 @@ class PopulateProductRelatedTable
 	end
 end	
 
-#execution = JobHandler.new(1000,"americanas.com.br") # limit to 10 results, development env
-#execution = JobHandler.new(1000,"magazineluiza.com.br") # limit to 10 results, development env
-#execution = JobHandler.new(1000,"casasbahia.com.br") # limit to 10 results, development env
-execution = JobHandler.new(15000,"pontofrio.com.br") # limit to 10 results, development env
+select_limit = 5000
+site_name = ARGV[0]
+valid_sites = ["americanas.com.br","pontofrio.com.br","magazineluiza.com.br","casasbahia.com.br"]
 
+valid_sites.each do |site_local|
 
-execution.run
-
-
-#process["start_time"] = Time.new.strftime(time_format)
-#http://www.buscape.com.br/cprocura/aspirador-de-po-mondial-next-1500-ap-12
-#http://www.buscape.com.br/cprocura?produto=aspirador+de+p%F3+mondial+next+1500+ap+12&fromSearchBox=true
-
-
-
+	if (site_local == site_name)
+		execution = JobHandler.new(select_limit,site_local)
+		execution.run
+	end
+end
 
 

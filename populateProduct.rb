@@ -4,7 +4,7 @@
 #FIXME: Refactor excption handling
 #TODO: Enable ERROR_LOG
 
-require './ProcessBase.rb'
+require %{#{Dir.pwd}/ProcessBase.rb}
 require 'rubygems'
 require 'nokogiri'
 require 'open_uri_redirections'

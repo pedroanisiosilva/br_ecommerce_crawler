@@ -5,12 +5,12 @@ SELECT
     p.name,
     p.url,
     pr.url,
-    pr.target_site,
+    pr.target_site
 FROM
     product_related pr,
     product p
 WHERE
-    f.product_id = 215
+    p.id = 3157
         AND pr.product_id = p.id
 
 

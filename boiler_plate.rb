@@ -1,23 +1,13 @@
 #!/usr/bin/ruby
 
-require 'date'
-require 'useragents'
-require 'net/http'
-require 'uri'
+site_name = ARGV[0]
 
-def revisionNumber(freight_name,zip_code,product_id,freight_cost,freight_promise)
+valid_sites = ["americanas.com.br","pontofrio.com.br","magazineluiza.com.br","casasbahia.com.br"]
 
-	statement = %{SELECT f.freight_cost, f.freight_promise, f.freight_revision FROM freight_data f WHERE f.freight_name = '#{freight_name}' AND product_id = '#{product_id} AND zip_code = '#{zip_code}';}
-	results = db.query(statement)
+valid_sites.each do |site|
+		puts %{site: #{site} | site_name: #{site_name}}
 
-	if results.size == 0
-		return 0
+	if (site == site_name)
+		puts %{-> site: #{site} | site_name: #{site_name}}
 	end
-
-	results.each do | result|
-		if freight_promise != result["freight_promise"] || freight_cost != result["freight_cost"]
-			return result["freight_revision"]+1
-		end
-	end
-	return -1
 end
