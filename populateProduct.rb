@@ -225,6 +225,6 @@ end
 #execution = JobHandler.new(20,-99,"walmart.com.br") # no limit on select
 #execution = JobHandler.new(20,1,"walmart.com.br") # limit to 10 results
 #execution = JobHandler.new(19,2000,"walmart.com.br") # limit to 10 results, development env
-execution = JobHandler.new(172,-99,"walmart.com.br") # no limit on prod enviroment
+execution = JobHandler.new(172,10000,"walmart.com.br") # no limit on prod enviroment
 
 execution.run #execute!
