@@ -29,7 +29,6 @@ class JobHandler
 		@jobs = Queue.new
 		@db_job_pool = ConnectionPool.new(size: JOB_MYSQL_POOL_SIZE, timeout: 5) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}		
 
-		#statement = %{SELECT p.* FROM product p LEFT JOIN freight_data f ON f.product_id = p.id WHERE f.product_id IS NULL AND p.origin = "#{site}" LIMIT #{limit}}
 		statement = %{SELECT p.* FROM product p LEFT JOIN freight_data f ON f.product_id = p.id WHERE f.product_id IS NULL LIMIT #{limit}}
 
 		if (limit == -99)
@@ -121,15 +120,42 @@ class PoulateFreightTable
 	end	
 
 	def run
-		cep_sp = ['04538','06460','01001','08210','05859']
-		cep_array = cep_sp
-		self.fetchFreight(cep_array)
+		cep_SP = ['04538','06460','01001','08210','05859']
+		cep_AC = ['69914']
+		cep_AL = ['57030']
+		cep_AM = ['69060']
+		cep_AP = ['68908']
+		cep_BA = ['41701']
+		cep_CE = ['60337']
+		cep_DF = ['70680']
+		cep_ES = ['29055']
+		cep_GO = ['74110']
+		cep_MA = ['65077']
+		cep_MG = ['30160']
+		cep_MS = ['79023']
+		cep_MT = ['78050']
+		cep_PA = ['66635']
+		cep_PB = ['58045']
+		cep_PE = ['50710']
+		cep_PI = ['64057']
+		cep_PR = ['80730']
+		cep_RJ = ['21240']
+		cep_RN = ['59086']
+		cep_RO = ['76805']
+		cep_RR = ['69301']
+		cep_RS = ['90250']
+		cep_SC = ['88034']
+		cep_SE = ['49160']
+		cep_TO = ['77023']
+		
+		@cep_array = cep_SP + cep_AC + cep_SE + cep_SC + cep_RS + cep_RR + cep_RO
+		@cep_array = @cep_array + cep_RN + cep_RJ + cep_PR + cep_PI + cep_PE + cep_PB + cep_PA + cep_MT
+		@cep_array = @cep_array + cep_MS + cep_MG + cep_MA + cep_GO + cep_ES + cep_DF + cep_CE + cep_BA
+		@cep_array = @cep_array + cep_AP + cep_AM + cep_AL + cep_TO
+
+		self.fetchFreight(@cep_array)
 	end
 end
 
-#execution = JobHandler.new(20,-99,"walmart.com.br") # no limit on select
-execution = JobHandler.new(10,"walmart.com.br") # limit to 10 results
-#execution = JobHandler.new(5000,"walmart.com.br") # limit to 10 results, development env
-#execution = JobHandler.new(10,"pontofrio.com.br") # limit to 10 results, development env
-
+execution = JobHandler.new(10000,"walmart.com.br") # limit to 10 results
 execution.run #execute!
