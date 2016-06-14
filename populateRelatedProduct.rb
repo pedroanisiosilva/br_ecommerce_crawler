@@ -140,11 +140,11 @@ class PopulateProductRelatedTable
 	end
 end	
 
+valid_sites = ["americanas.com.br","pontofrio.com.br","magazineluiza.com.br","casasbahia.com.br"]
 select_limit = 5000
 site_name = ARGV[0]
 
 execution = JobHandler.new(select_limit,site_name)
 execution.run
-
 
 

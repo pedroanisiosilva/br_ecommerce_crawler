@@ -391,14 +391,9 @@ class PoulateFreightTable
 	end
 end
 
-#execution = JobHandler.new(20,-99,"walmart.com.br") # no limit on select
-#execution = JobHandler.new(1000,"americanas.com.br") # limit to 10 results
-#execution = JobHandler.new(5000,"walmart.com.br") # limit to 10 results, development env
-execution = JobHandler.new(1,"americanas.com.br") # limit to 10 results
-#execution = JobHandler.new(100,"pontofrio.com.br") # limit to 10 results, development env
-#execution = JobHandler.new(100,"casasbahia.com.br") # limit to 10 results
-#execution = JobHandler.new(1000,"magazineluiza.com.br") # limit to 10 results
-execution.run #execute!
+valid_sites = ["americanas.com.br","pontofrio.com.br","magazineluiza.com.br","casasbahia.com.br"]
+select_limit = 5000
+site_name = ARGV[0]
 
-
-
+execution = JobHandler.new(select_limit,site_name)
+execution.run
