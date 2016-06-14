@@ -41,7 +41,7 @@ class JobHandler
 		statement = %{SELECT * FROM product_related WHERE target_site = '#{site}' LIMIT #{limit}}
 
 		if (limit == -99)
-			statement = %{select * from product where origin = "#{site}"}
+			statement = %{SELECT * FROM product_related WHERE target_site = '#{site}'}
 		end
 
 		db = self.get_connection
