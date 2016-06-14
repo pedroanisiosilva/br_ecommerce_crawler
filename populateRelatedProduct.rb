@@ -142,14 +142,9 @@ end
 
 select_limit = 5000
 site_name = ARGV[0]
-valid_sites = ["americanas.com.br","pontofrio.com.br","magazineluiza.com.br","casasbahia.com.br"]
 
-valid_sites.each do |site_local|
+execution = JobHandler.new(select_limit,site_name)
+execution.run
 
-	if (site_local == site_name)
-		execution = JobHandler.new(select_limit,site_local)
-		execution.run
-	end
-end
 
 
