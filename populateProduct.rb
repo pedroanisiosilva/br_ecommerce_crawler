@@ -156,8 +156,9 @@ class PoulateProductTable
 			@product["can_save"] = false
 	  		sleep(5)
 		end
-
-		self.extract_model(local_page)
+		if !local_page.nil?
+			self.extract_model(local_page)
+		end
 	end
 
 	def get_product_id
