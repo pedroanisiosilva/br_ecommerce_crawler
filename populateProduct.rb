@@ -75,7 +75,7 @@ class PoulateProductTable
 		end
 
 		@url = url
-		@db = self.get_connection
+		@db = get_connection
 		@product = Hash.new
 		@site = site
 	end
@@ -87,7 +87,7 @@ class PoulateProductTable
 				return db_connection
 			rescue
 				sleep (1)
-				self.get_connection
+				get_connection
 			end
 		end
 	end
@@ -115,10 +115,8 @@ class PoulateProductTable
 		begin
 			str = str.encode!("ISO-8859-1", :undef => :replace, :invalid => :replace, :replace => "")
 			str = Mysql.escape_string(str.encode!('UTF-8'))
-			return str
 		rescue
 			str = ""
-			return str
 		end
 	end
 
