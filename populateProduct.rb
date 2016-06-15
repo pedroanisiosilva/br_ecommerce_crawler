@@ -74,7 +74,7 @@ class PoulateProductTable
 		end
 
 		@url = url
-		@db = get_connection
+		@db = self.get_connection
 		@product = Hash.new
 		@site = site
 	end
@@ -86,7 +86,7 @@ class PoulateProductTable
 				return db_connection
 			rescue
 				sleep (1)
-				get_connection
+				self.get_connection
 			end
 		end
 	end
