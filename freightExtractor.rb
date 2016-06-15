@@ -107,7 +107,7 @@ class PoulateFreightTable
 	end	
 
 	def revisionNumber(freight_name,zip_code,product_id,freight_cost,freight_promise)
-		statement = %{SELECT f.freight_cost, f.freight_promise, f.freight_revision FROM freight_data f WHERE f.freight_name = '#{freight_name}' AND product_id = '#{product_id}' AND zip_code = #{zip_code} AND target_site=#{@site};}
+		statement = %{SELECT f.freight_cost, f.freight_promise, f.freight_revision FROM freight_data f WHERE f.freight_name = '#{freight_name}' AND product_id = '#{product_id}' AND zip_code = #{zip_code} AND target_site='#{@site}';}
 		results = @db.query(statement)
 
 		if results.size == 0
@@ -185,5 +185,5 @@ class PoulateFreightTable
 	end
 end
 
-execution = JobHandler.new(10000,"walmart.com.br") # limit to 10 results
+execution = JobHandler.new(1000,"walmart.com.br") # limit to 10 results
 execution.run #execute!
