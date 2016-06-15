@@ -94,11 +94,11 @@ class PoulateFreightTable
 		freight_revision = self.revisionNumber(freight_name,freight_destination,@product['id'],freight_price,freight_promise)
 
 		if freight_revision >= 0
-			statement = "INSERT INTO freight_data (product_id, freight_name, freight_cost, freight_promise, target_site,zip_code,freight_raw_data,freight_revision)
-		   VALUES(\"#{@product['id']}\", \"#{freight_name}\", \"#{freight_price}\",\"#{freight_promise}\", 
-		   \"#{@site}\",\"#{freight_destination}\",\"#{Mysql.escape_string(freight_raw_data.force_encoding(Encoding::UTF_8))}\",\"#{freight_revision}\");"		
 		    
 		    begin
+		    	statement = "INSERT INTO freight_data (product_id, freight_name, freight_cost, freight_promise, target_site,zip_code,freight_raw_data,freight_revision)
+		   VALUES(\"#{@product['id']}\", \"#{freight_name}\", \"#{freight_price}\",\"#{freight_promise}\", 
+		   \"#{@site}\",\"#{freight_destination}\",\"#{Mysql.escape_string(freight_raw_data.force_encoding(Encoding::UTF_8))}\",\"#{freight_revision}\");"		
 		    	@db.query(statement)
 		    rescue Exception => ex
 		    	puts "An error of type #{ex.class} happened, message is #{ex.message} [7dh]"
