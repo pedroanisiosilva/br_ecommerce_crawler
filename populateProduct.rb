@@ -131,6 +131,7 @@ class PoulateProductTable
 					if script.to_s  =~ /<script>var dataLayer = \[{"product":\s\[(.*)\],/ then 
 						begin
 							site_txt = $1.gsub(/productDescription":\s"(.*)"/,'productDescription":"omitted"')
+							site_txt.encode("UTF-8")
 							obj = JSON.parse(site_txt, object_class: OpenStruct)
 
 					 		@product["name"] = obj.productName
