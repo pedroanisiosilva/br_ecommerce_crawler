@@ -111,7 +111,8 @@ class PoulateProductTable
 	end
 
 	def adjust_encode_and_escape(str)
-		Mysql.escape_string(str)
+		str
+		#Mysql.escape_string(str)
 		# begin
 		# 	#str = str.encode!("ISO-8859-1", :undef => :replace, :invalid => :replace, :replace => "")
 		# 	#str = Mysql.escape_string(str.encode!('UTF-8'))
@@ -176,13 +177,18 @@ class PoulateProductTable
 
 	def insert_product
 	    begin
-	    	statement = "INSERT INTO product (name, brandName, departmentName, categoryName, subcategoryName,model,url,origin,targetSkuID,targetSourceID,raw_data)
-	   VALUES(\"#{@product['name']}\", \"#{@product['brandName']}\", \"#{@product['departmentName']}\",
-	    \"#{@product['categoryName']}\", \"#{@product['subcategoryName']}\",\"#{@product['model']}\",
-	    \"#{@url}\",\"#{@site}\",\"#{@product['productSku']}\",\"#{@product['productSeller']}\",
-	    \"#{@product['raw_data']}\");"	    	
-	    	@db.query(statement)
-	    	@product["id"] = @db.last_id
+
+			statement = @db.prepare("INSERT INTO product (name, brandName, departmentName, categoryName, subcategoryName,model,url,origin,targetSkuID,targetSourceID,raw_data) VALUES(?,?,?,?,?,?,?,?,?,?,?)")
+			statement.execute(@product['name'], @product['brandName'],@product['departmentName'],@product['categoryName'],@product['subcategoryName'],@product['model'],@url,@site,@product['productSku'],@product['productSeller'],@product['raw_data'])
+			@product["id"] = @db.last_id	
+
+	   #  	statement = "INSERT INTO product (name, brandName, departmentName, categoryName, subcategoryName,model,url,origin,targetSkuID,targetSourceID,raw_data)
+	   # VALUES(\"#{@product['name']}\", \"#{@product['brandName']}\", \"#{@product['departmentName']}\",
+	   #  \"#{@product['categoryName']}\", \"#{@product['subcategoryName']}\",\"#{@product['model']}\",
+	   #  \"#{@url}\",\"#{@site}\",\"#{@product['productSku']}\",\"#{@product['productSeller']}\",
+	   #  ?);"	    	
+	   #  	@db.query(statement)
+	   #  	@product["id"] = @db.last_id
 	    rescue Exception => ex
 			puts "An error of type #{ex.class} happened, message is #{ex.message} [#{@product}] [638]"
 	    end
