@@ -112,12 +112,13 @@ class PoulateProductTable
 	end
 
 	def adjust_encode_and_escape(str)
-		begin
-			str = str.encode!("ISO-8859-1", :undef => :replace, :invalid => :replace, :replace => "")
-			str = Mysql.escape_string(str.encode!('UTF-8'))
-		rescue
-			str = ""
-		end
+		Mysql.escape_string(str)
+		# begin
+		# 	#str = str.encode!("ISO-8859-1", :undef => :replace, :invalid => :replace, :replace => "")
+		# 	#str = Mysql.escape_string(str.encode!('UTF-8'))
+		# rescue
+		# 	#str = ""
+		# end
 	end
 
 	def parse_html_build_product
@@ -130,7 +131,6 @@ class PoulateProductTable
 					if script.to_s  =~ /<script>var dataLayer = \[{"product":\s\[(.*)\],/ then 
 						begin
 							site_txt = $1.gsub(/productDescription":\s"(.*)"/,'productDescription":"omitted"')
-							site_txt.encode("UTF-8")
 							obj = JSON.parse(site_txt, object_class: OpenStruct)
 
 					 		@product["name"] = obj.productName
