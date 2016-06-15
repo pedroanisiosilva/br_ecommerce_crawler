@@ -130,7 +130,7 @@ class PoulateProductTable
 				if script.to_s.match('var dataLayer')
 					if script.to_s  =~ /<script>var dataLayer = \[{"product":\s\[(.*)\],/ then 
 						begin
-							site_txt = $1
+							site_txt = $1.gsub(/productDescription":\s"(.*)"/,'productDescription":"omitted"')
 							obj = JSON.parse(site_txt, object_class: OpenStruct)
 
 					 		@product["name"] = obj.productName
@@ -141,7 +141,7 @@ class PoulateProductTable
 						 	@product["productSku"] = obj.productSku
 						 	@product["productSeller"] = self.adjust_encode_and_escape(obj.productSeller.to_s)
 						 	@product["can_save"] = true
-						 	@product["raw_data"] = self.adjust_encode_and_escape(site_txt.gsub(/productDescription":\s"(.*)"/,'"productDescription":"ommited "'))
+						 	@product["raw_data"] = self.adjust_encode_and_escape(site_txt)
 						
 						rescue Exception => ex
 							puts "An error of type #{ex.class} happened, message is #{ex.message} [736]"
