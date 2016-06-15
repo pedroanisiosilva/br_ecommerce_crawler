@@ -129,9 +129,7 @@ class PoulateFreightTable
 		sniper_url = ""
 		cep_input.each do |cep|
 			begin
-				if (@site == "walmart.com.br")
-					sniper = %{https://www2.walmart.com.br/checkout/services/simulation?postalCode=#{cep}000&sku=#{@product['targetSkuID']}&q=#{Random.rand(99999999999)}}
-				end
+				sniper = %{https://www2.walmart.com.br/checkout/services/simulation?postalCode=#{cep}000&sku=#{@product['targetSkuID']}&q=#{Random.rand(99999999999)}}
 				obj = JSON.parse(self.parseUrl(sniper), object_class: OpenStruct)
 
 				obj[0].items[0].deliveryTypes.each do |frete|
@@ -140,9 +138,8 @@ class PoulateFreightTable
 					self.db_insertFreightData(frete.name,frete.price,frete.shippingEstimateInDays,self.parseUrl(sniper),%{#{cep}000})
 
 				end	
-			rescue OpenURI::HTTPError => ex
-				puts "An error of type #{ex.class} happened, message is #{ex.message} [736]"
-				sleep(3)
+			rescue TypeError, NameError => ex
+				puts "An error of type #{ex.class} happened, message is #{ex.message} [tdh!]"
 			end 			    		
 		end
 	end	
