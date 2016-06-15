@@ -15,6 +15,7 @@ require 'mysql2'
 require 'mysql'
 require 'json'
 require 'bson'
+Encoding.default_internal = 'UTF-8'
 
 JOB_MYSQL_POOL_SIZE = 1
 JOB_POOL_SIZE = 20
