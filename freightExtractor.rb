@@ -81,15 +81,49 @@ class PoulateFreightTable
 		agent = UserAgents.rand()
 		page_string = ""
 		begin
-			open(url,"User-Agent" => agent) do |f|
+			open(URI.encode(url),"User-Agent" => agent) do |f|
 				page_string = f.read
 			end
 		rescue Exception => ex
 			puts "An error of type #{ex.class} happened, message is #{ex.message} [hdh]"
 		end			
-
 		page_string
 	end
+
+	def db_insertFreightData(freight_name,freight_price,freight_promise,freight_raw_data,freight_destination)
+		freight_revision = self.revisionNumber(freight_name,freight_destination,@product['id'],freight_price,freight_promise)
+
+		if freight_revision >= 0
+			statement = "INSERT INTO freight_data (product_id, freight_name, freight_cost, freight_promise, target_site,zip_code,freight_raw_data,freight_revision)
+		   VALUES(\"#{@product['id']}\", \"#{freight_name}\", \"#{freight_price}\",\"#{freight_promise}\", 
+		   \"#{@site}\",\"#{freight_destination}\",\"#{Mysql.escape_string(freight_raw_data.force_encoding(Encoding::UTF_8))}\",\"#{freight_revision}\");"		
+		    
+		    begin
+		    	@db.query(statement)
+		    rescue Exception => ex
+		    	puts "An error of type #{ex.class} happened, message is #{ex.message} [7dh]"
+		    end
+		end	
+	end	
+
+	def revisionNumber(freight_name,zip_code,product_id,freight_cost,freight_promise)
+		statement = %{SELECT f.freight_cost, f.freight_promise, f.freight_revision FROM freight_data f WHERE f.freight_name = '#{freight_name}' AND product_id = '#{product_id}' AND zip_code = #{zip_code} AND target_site=#{@site};}
+		results = @db.query(statement)
+
+		if results.size == 0
+			return 0
+		end
+
+		results.each do | result|
+			puts %{result #{freight_promise}:#{result["freight_promise"]}}
+			puts %{result #{freight_cost}:#{result["freight_cost"]}}
+			if (freight_promise.to_i != result["freight_promise"].to_i || freight_cost.to_f != result["freight_cost"].to_f)
+				puts %{increment revision}
+				return result["freight_revision"]+1
+			end
+		end
+		return -1
+	end		
 
 	def fetchFreight(cep_input)
 		sniper_url = ""
@@ -102,15 +136,9 @@ class PoulateFreightTable
 
 				obj[0].items[0].deliveryTypes.each do |frete|
 					frete.price = frete.price.to_f/100
-					statement = "INSERT INTO freight_data (product_id, freight_name, freight_cost, freight_promise, target_site,zip_code)
-				   VALUES(\"#{@product['id']}\", \"#{frete.name}\", \"#{frete.price}\",
-				    \"#{frete.shippingEstimateInDays}\", \"#{@site}\",\"#{cep}000\");"
 
-			    	begin
-			    		@db.query(statement)
-			    	rescue Exception => ex
-			    		puts "An error of type #{ex.class} happened, message is #{ex.message} [736]"
-			    	end	
+					self.db_insertFreightData(frete.name,frete.price,frete.shippingEstimateInDays,self.parseUrl(sniper),%{#{cep}000})
+
 				end	
 			rescue OpenURI::HTTPError => ex
 				puts "An error of type #{ex.class} happened, message is #{ex.message} [736]"
