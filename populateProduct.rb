@@ -141,7 +141,7 @@ class PoulateProductTable
 						 	@product["productSku"] = obj.productSku
 						 	@product["productSeller"] = self.adjust_encode_and_escape(obj.productSeller.to_s)
 						 	@product["can_save"] = true
-						 	@product["raw_data"] = self.adjust_encode_and_escape(site_txt)
+						 	@product["raw_data"] = self.adjust_encode_and_escape(site_txt.gsub(/productDescription":\s"(.*)"/,'"productDescription":"ommited "'))
 						
 						rescue Exception => ex
 							puts "An error of type #{ex.class} happened, message is #{ex.message} [736]"
