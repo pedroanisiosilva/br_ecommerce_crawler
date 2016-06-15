@@ -14,8 +14,8 @@ require 'net/http'
 require 'uri'
 
 JOB_MYSQL_POOL_SIZE = 1
-JOB_POOL_SIZE = 5
-PRODUCT_MYSQL_POOL_SIZE = 10
+PRODUCT_MYSQL_POOL_SIZE = 25
+JOB_POOL_SIZE = 20
 
 class JobHandler
 
@@ -32,7 +32,7 @@ class JobHandler
 		statement = %{SELECT p.* FROM product p LEFT JOIN freight_data f ON f.product_id = p.id WHERE f.product_id IS NULL LIMIT #{limit}}
 
 		if (limit == -99)
-			statement = %{select * from product where origin = "#{site}"}
+			statement = %{SELECT p.* FROM product p LEFT JOIN freight_data f ON f.product_id = p.id WHERE f.product_id IS NULL}
 		end
 
 		db = self.get_connection
@@ -65,7 +65,7 @@ end
 class PoulateFreightTable
 
 	def initialize(product,site)
-		@@db_job_pool = ConnectionPool.new(size: PRODUCT_MYSQL_POOL_SIZE, timeout: 5) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}		
+		@@db_job_pool = ConnectionPool.new(size: PRODUCT_MYSQL_POOL_SIZE, timeout: 1) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}		
 		@db = self.get_connection
 		@product = product
 		@site = site
