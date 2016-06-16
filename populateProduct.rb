@@ -14,7 +14,6 @@ require 'connection_pool'
 require 'mysql2'
 require 'mysql'
 require 'json'
-require 'bson'
 
 JOB_MYSQL_POOL_SIZE = 1
 JOB_POOL_SIZE = 20
@@ -35,7 +34,7 @@ class JobHandler
 		statement = %{SELECT r.* FROM raw_product_url r WHERE NOT exists (select null from product p WHERE r.url = p.url AND r.process_id = "#{process_id}") LIMIT #{limit}}
 
 		if (limit == -99)
-			statement = %{select * from raw_product_url where process_id = #{process_id}}
+			statement = %{SELECT r.* FROM raw_product_url r WHERE NOT exists (select null from product p WHERE r.url = p.url AND r.process_id = "#{process_id}")}
 		end
 
 		db = self.get_connection
