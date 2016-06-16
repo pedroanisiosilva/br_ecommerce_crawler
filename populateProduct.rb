@@ -31,7 +31,8 @@ class JobHandler
 	def initialize(process_id,limit,site)	
 		@jobs = Queue.new
 		@db_job_pool = ConnectionPool.new(size: JOB_MYSQL_POOL_SIZE, timeout: 1) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}		
-		statement = %{select * from raw_product_url where process_id = #{process_id} limit #{limit}}
+
+		statement = %{SELECT r.* FROM raw_product_url r WHERE NOT exists (select null from product p WHERE r.url = p.url AND r.process_id = "#{process_id}") LIMIT #{limit}}
 
 		if (limit == -99)
 			statement = %{select * from raw_product_url where process_id = #{process_id}}
@@ -50,7 +51,9 @@ class JobHandler
 			Thread.new do
 				begin      
 			  		while x = @jobs.pop(true)
-			  			url = %{https://www.walmart.com.br#{results_array[x]["url"]}}
+			  			#url = %{https://www.walmart.com.br#{results_array[x]["url"]}}
+			  			 url = results_array[x]["url"]
+
 			  			product = PoulateProductTable.new(url,@site)
 			  			product.run
 			  		end
@@ -123,7 +126,8 @@ class PoulateProductTable
 
 	def parse_html_build_product
 		begin
-			local_page = Nokogiri::HTML(open(@url,:allow_redirections => :safe))
+
+			local_page = Nokogiri::HTML(open(%{https://www.walmart.com.br#{@url}},:allow_redirections => :safe))
 			local_parse = local_page.css("[@class='webstore product']")
 			local_parse = local_parse.xpath("//script")
 			local_parse.each do |script|
@@ -182,13 +186,6 @@ class PoulateProductTable
 			statement.execute(@product['name'], @product['brandName'],@product['departmentName'],@product['categoryName'],@product['subcategoryName'],@product['model'],@url,@site,@product['productSku'],@product['productSeller'],@product['raw_data'])
 			@product["id"] = @db.last_id	
 
-	   #  	statement = "INSERT INTO product (name, brandName, departmentName, categoryName, subcategoryName,model,url,origin,targetSkuID,targetSourceID,raw_data)
-	   # VALUES(\"#{@product['name']}\", \"#{@product['brandName']}\", \"#{@product['departmentName']}\",
-	   #  \"#{@product['categoryName']}\", \"#{@product['subcategoryName']}\",\"#{@product['model']}\",
-	   #  \"#{@url}\",\"#{@site}\",\"#{@product['productSku']}\",\"#{@product['productSeller']}\",
-	   #  ?);"	    	
-	   #  	@db.query(statement)
-	   #  	@product["id"] = @db.last_id
 	    rescue Exception => ex
 			puts "An error of type #{ex.class} happened, message is #{ex.message} [#{@product}] [638]"
 	    end
