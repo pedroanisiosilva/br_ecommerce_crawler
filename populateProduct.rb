@@ -22,14 +22,14 @@ PRODUCT_MYSQL_POOL_SIZE = 40
 class JobHandler
 
 	def get_connection
-		@db_job_pool.with do |db_connection|
+		@@db_product_pool.with do |db_connection|
 			return db_connection
 		end
 	end
 
 	def initialize(process_id,limit,site)	
 		@jobs = Queue.new
-		@db_job_pool = ConnectionPool.new(size: JOB_MYSQL_POOL_SIZE, timeout: 1) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}		
+		@@db_product_pool = ConnectionPool.new(size: PRODUCT_MYSQL_POOL_SIZE, timeout: 1) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}	
 
 		statement = %{SELECT r.* FROM raw_product_url r WHERE NOT exists (select null from product p WHERE r.url = p.url AND r.process_id = "#{process_id}") LIMIT #{limit}}
 
@@ -37,7 +37,7 @@ class JobHandler
 			statement = %{SELECT r.* FROM raw_product_url r WHERE NOT exists (select null from product p WHERE r.url = p.url AND r.process_id = "#{process_id}")}
 		end
 
-		db = self.get_connection
+		db = get_connection
 		@results = db.query(statement)
 		@site = site
 	end
@@ -53,7 +53,7 @@ class JobHandler
 			  			#url = %{https://www.walmart.com.br#{results_array[x]["url"]}}
 			  			 url = results_array[x]["url"]
 
-			  			product = PoulateProductTable.new(url,@site)
+			  			product = PoulateProductTable.new(url,@site,get_connection)
 			  			product.run
 			  		end
 				rescue ThreadError => ex
@@ -68,29 +68,12 @@ end
 
 class PoulateProductTable
 
-	def initialize(url,site)
-		begin
-			@@db_job_pool.nil?
-		rescue
-			@@db_job_pool = ConnectionPool.new(size: PRODUCT_MYSQL_POOL_SIZE, timeout: 1) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}	
-		end
+	def initialize(url,site,db_connection)
 
 		@url = url
-		@db = self.get_connection
+		@db = db_connection
 		@product = Hash.new
 		@site = site
-	end
-
-	def get_connection
-		@@db_job_pool.with do |db_connection|
-			begin
-				db_connection.query("SELECT NOW()")
-				return db_connection
-			rescue
-				sleep (1)
-				self.get_connection
-			end
-		end
 	end
 
 	def extract_model(page)
