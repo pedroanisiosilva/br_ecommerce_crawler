@@ -110,7 +110,7 @@ class PoulateProductTable
 		end
 	end
 
-	def adjust_encode_and_escape(str)
+	def encode_base64(str)
 		Base64.encode64(str)
 	end
 
@@ -133,9 +133,9 @@ class PoulateProductTable
 						 	@product["categoryName"] = obj.productCategoryName
 						 	@product["subcategoryName"] = obj.productSubCategory
 						 	@product["productSku"] = obj.productSku
-						 	@product["productSeller"] = self.adjust_encode_and_escape(obj.productSeller.to_s)
+						 	@product["productSeller"] = obj.productSeller.to_s
 						 	@product["can_save"] = true
-						 	@product["raw_data"] = self.adjust_encode_and_escape(site_txt)
+						 	@product["raw_data"] = self.encode_base64(site_txt)
 						
 						rescue Exception => ex
 							puts "An error of type #{ex.class} happened, message is #{ex.message} [736]"
