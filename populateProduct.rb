@@ -18,8 +18,8 @@ require 'digest'
 require "base64"
 
 JOB_MYSQL_POOL_SIZE = 1
-JOB_POOL_SIZE = 30
-PRODUCT_MYSQL_POOL_SIZE = 60
+JOB_POOL_SIZE = 5
+PRODUCT_MYSQL_POOL_SIZE = 10
 
 class JobHandler
 
@@ -29,7 +29,6 @@ class JobHandler
 		last_used_id = 0
 
 		PRODUCT_MYSQL_POOL_SIZE.times do
-
 			@connection_pool[last_used_id] = Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER",:connect_timeout => 30, :reconnect=>true)		
 			last_used_id= last_used_id+1
 		end
@@ -45,7 +44,7 @@ class JobHandler
 	def initialize(process_id,limit,site)	
 		self.initialize_connection
 		@jobs = Queue.new
-		# @@db_product_pool = ConnectionPool.new(size: PRODUCT_MYSQL_POOL_SIZE, timeout: 5) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}	
+		
 		statement = %{SELECT r.* FROM raw_product_url r WHERE NOT exists (select null from product p WHERE r.url = p.url) AND r.process_id = "#{process_id}" LIMIT #{limit}}
 
 		if (limit == -99)
@@ -155,26 +154,11 @@ class PoulateProductTable
 		end
 	end
 
-	def get_product_id
-		statement = %{select id from product where model = "#{@product["model"]}";} 
-
-		begin
-			results = @db.query(statement)
-			results.each do |row|
-			  return row["id"]
-			end	
-		rescue Exception => ex
-			puts "An error of type #{ex.class} happened, message is #{ex.message} [4fr]"
-			return -666
-		end	
-	end
-
 	def insert_product
 	    begin
 
 			statement = @db.prepare("INSERT INTO product (name, brandName, departmentName, categoryName, subcategoryName,model,url,origin,targetSkuID,targetSourceID,raw_data,url_hash) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)")
-			statement.execute(@product['name'], @product['brandName'],@product['departmentName'],@product['categoryName'],@product['subcategoryName'],@product['model'],@url,@site,@product['productSku'],@product['productSeller'],@product['raw_data'],Digest::MD5.hexdigest(@url))
-			@product["id"] = @db.last_id	
+			statement.execute(@product['name'], @product['brandName'],@product['departmentName'],@product['categoryName'],@product['subcategoryName'],@product['model'],@url,@site,@product['productSku'],@product['productSeller'],@product['raw_data'],Digest::MD5.hexdigest(@url))	
 
 	    rescue Exception => ex
 			puts "An error of type #{ex.class} happened, message is #{ex.message} [#{@product}] [638]"
@@ -197,20 +181,12 @@ class PoulateProductTable
 	end		
 
 	def run
-		#cep_array = ["15450","04510"]
 
-		if(self.check_if_exist)
+		self.parse_html_build_product	
+		if (@product["can_save"] == false || @product["model"].nil?)
 			return
 		else
-			self.parse_html_build_product
-		
-			#can't save if threre is error or model is empty
-			if (@product["can_save"] == false || @product["model"].nil?)
-				return
-			else
-				self.insert_product
-			end
-			#self.fetchFreight(cep_array)
+			self.insert_product
 		end
 	end
 end
