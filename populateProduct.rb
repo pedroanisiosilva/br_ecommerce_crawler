@@ -15,6 +15,7 @@ require 'mysql2'
 require 'mysql'
 require 'json'
 require 'digest'
+require "base64"
 
 JOB_MYSQL_POOL_SIZE = 1
 JOB_POOL_SIZE = 20
@@ -110,7 +111,7 @@ class PoulateProductTable
 	end
 
 	def adjust_encode_and_escape(str)
-		str
+		Base64.encode64(str)
 	end
 
 	def parse_html_build_product
