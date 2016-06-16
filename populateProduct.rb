@@ -14,6 +14,7 @@ require 'connection_pool'
 require 'mysql2'
 require 'mysql'
 require 'json'
+require 'digest'
 
 JOB_MYSQL_POOL_SIZE = 1
 JOB_POOL_SIZE = 20
@@ -21,28 +22,42 @@ PRODUCT_MYSQL_POOL_SIZE = 40
 
 class JobHandler
 
-	def get_connection
-		@@db_product_pool.with do |db_connection|
-			return db_connection
+	def initialize_connection
+		@last_used_pool = 0
+		@connection_pool = Array.new
+		last_used_id = 0
+
+		PRODUCT_MYSQL_POOL_SIZE.times do
+
+			@connection_pool[last_used_id] = Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER",:connect_timeout => 30, :reconnect=>true)		
+			last_used_id= last_used_id+1
 		end
 	end
 
-	def initialize(process_id,limit,site)	
-		@jobs = Queue.new
-		@@db_product_pool = ConnectionPool.new(size: PRODUCT_MYSQL_POOL_SIZE, timeout: 1) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}	
+	def get_connection
+		@last_used_pool = 0 if @last_used_pool == PRODUCT_MYSQL_POOL_SIZE
+		con = @connection_pool[@last_used_pool]
+		@last_used_pool = @last_used_pool+1
+		return con
+	end
 
-		statement = %{SELECT r.* FROM raw_product_url r WHERE NOT exists (select null from product p WHERE r.url = p.url AND r.process_id = "#{process_id}") LIMIT #{limit}}
+	def initialize(process_id,limit,site)	
+		self.initialize_connection
+		@jobs = Queue.new
+		# @@db_product_pool = ConnectionPool.new(size: PRODUCT_MYSQL_POOL_SIZE, timeout: 5) { Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER")}	
+		statement = %{SELECT r.* FROM raw_product_url r WHERE NOT exists (select null from product p WHERE r.url = p.url) AND r.process_id = "#{process_id}" LIMIT #{limit}}
 
 		if (limit == -99)
-			statement = %{SELECT r.* FROM raw_product_url r WHERE NOT exists (select null from product p WHERE r.url = p.url AND r.process_id = "#{process_id}")}
+			statement = %{SELECT r.* FROM raw_product_url r WHERE NOT exists (select null from product p WHERE r.url = p.url) AND r.process_id = "#{process_id}" }
 		end
 
-		db = get_connection
+		db = self.get_connection
 		@results = db.query(statement)
 		@site = site
 	end
 
 	def run
+		puts %{#{@results.size}}
 		@results.size.times{|i| @jobs.push i}
 		results_array = @results.each.to_a
 
@@ -50,14 +65,13 @@ class JobHandler
 			Thread.new do
 				begin      
 			  		while x = @jobs.pop(true)
-			  			#url = %{https://www.walmart.com.br#{results_array[x]["url"]}}
-			  			 url = results_array[x]["url"]
-
-			  			product = PoulateProductTable.new(url,@site,get_connection)
+			  			url = results_array[x]["url"]
+#			  			puts %{#{url},#{@site},#{self.get_connection}}
+			  			product = PoulateProductTable.new(url,@site,self.get_connection)
 			  			product.run
 			  		end
 				rescue ThreadError => ex
-					puts "An error of type #{ex.class} happened, message is #{ex.message} [937]"
+					puts "An error of type #{ex.class} happened, message is #{ex.message} [937b]"
 					puts %{#{url}}
 				end
 			end
@@ -97,13 +111,6 @@ class PoulateProductTable
 
 	def adjust_encode_and_escape(str)
 		str
-		#Mysql.escape_string(str)
-		# begin
-		# 	#str = str.encode!("ISO-8859-1", :undef => :replace, :invalid => :replace, :replace => "")
-		# 	#str = Mysql.escape_string(str.encode!('UTF-8'))
-		# rescue
-		# 	#str = ""
-		# end
 	end
 
 	def parse_html_build_product
@@ -116,7 +123,7 @@ class PoulateProductTable
 				if script.to_s.match('var dataLayer')
 					if script.to_s  =~ /<script>var dataLayer = \[{"product":\s\[(.*)\],/ then 
 						begin
-							site_txt = $1.gsub(/productDescription":\s"(.*)"/,'productDescription":"omitted"')
+							site_txt = $1.gsub(/"productDescription":\s\"([^"]*)\",/,'').gsub(/"description":\s\"([^"]*)\",/,'')
 							obj = JSON.parse(site_txt, object_class: OpenStruct)
 
 					 		@product["name"] = obj.productName
@@ -164,8 +171,8 @@ class PoulateProductTable
 	def insert_product
 	    begin
 
-			statement = @db.prepare("INSERT INTO product (name, brandName, departmentName, categoryName, subcategoryName,model,url,origin,targetSkuID,targetSourceID,raw_data) VALUES(?,?,?,?,?,?,?,?,?,?,?)")
-			statement.execute(@product['name'], @product['brandName'],@product['departmentName'],@product['categoryName'],@product['subcategoryName'],@product['model'],@url,@site,@product['productSku'],@product['productSeller'],@product['raw_data'])
+			statement = @db.prepare("INSERT INTO product (name, brandName, departmentName, categoryName, subcategoryName,model,url,origin,targetSkuID,targetSourceID,raw_data,url_hash) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)")
+			statement.execute(@product['name'], @product['brandName'],@product['departmentName'],@product['categoryName'],@product['subcategoryName'],@product['model'],@url,@site,@product['productSku'],@product['productSeller'],@product['raw_data'],Digest::MD5.hexdigest(@url))
 			@product["id"] = @db.last_id	
 
 	    rescue Exception => ex
@@ -210,6 +217,6 @@ end
 #execution = JobHandler.new(20,-99,"walmart.com.br") # no limit on select
 #execution = JobHandler.new(20,1,"walmart.com.br") # limit to 10 results
 #execution = JobHandler.new(19,2000,"walmart.com.br") # limit to 10 results, development env
-execution = JobHandler.new(172,10000,"walmart.com.br") # no limit on prod enviroment
+execution = JobHandler.new(172,1000,"walmart.com.br") # no limit on prod enviroment
 
 execution.run #execute!
