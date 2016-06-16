@@ -17,8 +17,8 @@ require 'json'
 require 'digest'
 
 JOB_MYSQL_POOL_SIZE = 1
-JOB_POOL_SIZE = 20
-PRODUCT_MYSQL_POOL_SIZE = 40
+JOB_POOL_SIZE = 30
+PRODUCT_MYSQL_POOL_SIZE = 60
 
 class JobHandler
 
@@ -217,6 +217,6 @@ end
 #execution = JobHandler.new(20,-99,"walmart.com.br") # no limit on select
 #execution = JobHandler.new(20,1,"walmart.com.br") # limit to 10 results
 #execution = JobHandler.new(19,2000,"walmart.com.br") # limit to 10 results, development env
-execution = JobHandler.new(172,1000,"walmart.com.br") # no limit on prod enviroment
+execution = JobHandler.new(172,100000,"walmart.com.br") # no limit on prod enviroment
 
 execution.run #execute!
