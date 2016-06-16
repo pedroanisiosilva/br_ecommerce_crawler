@@ -18,31 +18,12 @@ require 'digest'
 require "base64"
 
 JOB_MYSQL_POOL_SIZE = 1
-JOB_POOL_SIZE = 5
+JOB_POOL_SIZE = 50
 PRODUCT_MYSQL_POOL_SIZE = 10
 
 class JobHandler
 
-	def initialize_connection
-		@last_used_pool = 0
-		@connection_pool = Array.new
-		last_used_id = 0
-
-		PRODUCT_MYSQL_POOL_SIZE.times do
-			@connection_pool[last_used_id] = Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER",:connect_timeout => 30, :reconnect=>true)		
-			last_used_id= last_used_id+1
-		end
-	end
-
-	def get_connection
-		@last_used_pool = 0 if @last_used_pool == PRODUCT_MYSQL_POOL_SIZE
-		con = @connection_pool[@last_used_pool]
-		@last_used_pool = @last_used_pool+1
-		return con
-	end
-
 	def initialize(process_id,limit,site)	
-		self.initialize_connection
 		@jobs = Queue.new
 		
 		statement = %{SELECT r.* FROM raw_product_url r WHERE NOT exists (select null from product p WHERE r.url = p.url) AND r.process_id = "#{process_id}" LIMIT #{limit}}
@@ -51,7 +32,7 @@ class JobHandler
 			statement = %{SELECT r.* FROM raw_product_url r WHERE NOT exists (select null from product p WHERE r.url = p.url) AND r.process_id = "#{process_id}" }
 		end
 
-		db = self.get_connection
+		db = Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER",:connect_timeout => 30, :reconnect=>true)
 		@results = db.query(statement)
 		@site = site
 	end
@@ -66,8 +47,7 @@ class JobHandler
 				begin      
 			  		while x = @jobs.pop(true)
 			  			url = results_array[x]["url"]
-#			  			puts %{#{url},#{@site},#{self.get_connection}}
-			  			product = PoulateProductTable.new(url,@site,self.get_connection)
+			  			product = PoulateProductTable.new(url,@site)
 			  			product.run
 			  		end
 				rescue ThreadError => ex
@@ -82,10 +62,8 @@ end
 
 class PoulateProductTable
 
-	def initialize(url,site,db_connection)
-
+	def initialize(url,site)
 		@url = url
-		@db = db_connection
 		@product = Hash.new
 		@site = site
 	end
@@ -156,29 +134,13 @@ class PoulateProductTable
 
 	def insert_product
 	    begin
-
 			statement = @db.prepare("INSERT INTO product (name, brandName, departmentName, categoryName, subcategoryName,model,url,origin,targetSkuID,targetSourceID,raw_data,url_hash) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)")
 			statement.execute(@product['name'], @product['brandName'],@product['departmentName'],@product['categoryName'],@product['subcategoryName'],@product['model'],@url,@site,@product['productSku'],@product['productSeller'],@product['raw_data'],Digest::MD5.hexdigest(@url))	
 
 	    rescue Exception => ex
 			puts "An error of type #{ex.class} happened, message is #{ex.message} [#{@product}] [638]"
 	    end
-	end
-
-	def check_if_exist
-		statement = %{SELECT * FROM product p where p.url = "#{@url}"}
-		begin
-			results = @db.query(statement)
-
-			if results.size == 0
-				return false
-			else
-				return true
-			end
-		rescue
-			return true
-		end
-	end		
+	end	
 
 	def run
 
@@ -186,7 +148,9 @@ class PoulateProductTable
 		if (@product["can_save"] == false || @product["model"].nil?)
 			return
 		else
+			@db = Mysql2::Client.new(:host => "localhost", :username => "root", :password => "hD@ba5MWUr#gnoyu95oX0*mF", :database => "COMMERCE_CRAWLER",:connect_timeout => 1, :reconnect=>false)
 			self.insert_product
+			@db.close
 		end
 	end
 end
